@@ -30,18 +30,12 @@ export default {
   },
   methods: {
     register() {
-      axios.post(
-        "/accounts:signUp?key=AIzaSyCfpAFLLpuLkDwWAPsedRZV9Kv2f3v_LFE",
-        {
-          email: this.email,
-          password: this.password,
-          returnSecureToken: true
-        }
-      ).then(response => {
-        console.log(response);
-      });
-    this.email = "";
-    this.password = "";
+    this.$store.dispatch('register', {
+      email: this.email,
+      password: this.password
+    });
+      this.email = "";
+      this.password = "";
     }
   }
 };
