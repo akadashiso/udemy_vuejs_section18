@@ -15,12 +15,12 @@
       v-model="password"
     >
     <br><br>
-    <button @click="Register">送信</button>
+    <button @click="register">送信</button>
   </div>
 </template>
 
 <script>
-
+import axios from '../axios-auth';
 export default {
   data() {
     return {
@@ -29,7 +29,18 @@ export default {
     };
   },
   methods: {
-    register() {}
+    register() {
+      axios.post(
+        "/accounts:signUp?key=AIzaSyCfpAFLLpuLkDwWAPsedRZV9Kv2f3v_LFE",
+        {
+          email: this.email,
+          password: this.password,
+          returnSecureToken: true
+        }
+      ).then(response => {
+        console.log(response);
+      });
+    }
   }
 };
 </script>
