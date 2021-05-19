@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2>ログイン</h2>
+    <h2>登録</h2>
     <label for="email">登録：</label>
     <input
       id="email"
