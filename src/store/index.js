@@ -8,6 +8,9 @@ export default new Vuex.Store({
   state: {
     idToken: null
   },
+  getters: {
+    idToken: state => state.idToken
+  },
   mutations: {
     updateIdToken(state, idToken) {
       state.idToken = idToken;
@@ -37,7 +40,7 @@ export default new Vuex.Store({
             returnSecureToken: true
           }
           ).then(response => {
-              commit('updateIdToken', response.data.idToken);
+            commit('updateIdToken', response.data.idToken);
       });
     }
   }
