@@ -19,7 +19,24 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    login({ commit, dispatch }, authData) {
+    autoLogin({ commit }) {
+      const idToken = localStorage.getItem('idToken');
+      if (!idToken) return;
+      const now = new Date();
+      const expiryTimeMs = localStorage.getItem('expiryTimeMs');
+      const isExpired = now.getTime() >= expiryTimeMs;
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (isExpired) {
+        dispatch('refreshIdToken', refreshToken);
+      } else {
+        const expiresInMs = expiryTimeMs - now.getTime();
+        setTimeout(() => {
+          dispatch('refreshIdToken', refreshToken);
+        },expiresInMs);
+        commit('updateIdToken', idToken);
+      }
+    },
+    login({ dispatch }, authData) {
       axios.post(
           "/accounts:signInWithPassword?key=AIzaSyCfpAFLLpuLkDwWAPsedRZV9Kv2f3v_LFE",
           {
@@ -27,28 +44,30 @@ export default new Vuex.Store({
             password: authData.password,
             returnSecureToken: true
           }
-          ).then(response => {
-            commit('updateIdToken', response.data.idToken);
-            setTimeout(() => {
-              dispatch('refreshIdToken', response.data.refreshToken);
-            }, response.data.expiresIn * 1000)
-            router.push('/');
-      });
+        ).then(response => {
+          dispatch('setAuthData', {
+            idToken: response.data.idToken,
+            expiresIn: response.data.expiresIn,
+            refreshToken: response.data.refreshToken
+          });
+          router.push('/');
+        });
     },
-    refreshIdToken({ commit, dispatch }, refreshToken) {
+    refreshIdToken({ dispatch }, refreshToken) {
       axiosRefresh
         .post('/token?key=AIzaSyCfpAFLLpuLkDwWAPsedRZV9Kv2f3v_LFE', {
             grant_type: 'refresh_token',
             refresh_token: refreshToken
           }
         ).then(response => {
-          commit('updateToken', response.data.id_token);
-          setTimeout(() => {
-            dispatch('refreshIdToken', response.data.refresh_token);
-          }, response.data.expires_in * 1000);
+          dispatch('setAuthData', {
+            idToken: response.data.id_token,
+            expiresIn: response.data.expiresIn,
+            refreshToken: response.data.refresh_token
+          });
         });
     },
-    register({ commit }, authData) {
+    register({ dispatch }, authData) {
       axios
         .post(
           "/accounts:signUp?key=AIzaSyCfpAFLLpuLkDwWAPsedRZV9Kv2f3v_LFE",
@@ -58,9 +77,24 @@ export default new Vuex.Store({
             returnSecureToken: true
           }
           ).then(response => {
-            commit('updateIdToken', response.data.idToken);
+            dispatch('setAuthData', {
+              idToken: response.data.idToken,
+              expiresIn: response.data.expiresIn,
+              refreshToken: response.data.refreshToken
+            });
             router.push('/')
       });
+    },
+    setAuthData({ commit, dispatch}, authData) {
+      const now = new Date();
+      const expiryTimeMs = now.getTime() + authData.expiresIn * 1000;
+      commit('updateIdToken', authData.idToken);
+      localStorage.setItem('idToken', authData.idToken);
+      localStorage.setItem('expiryTimeMs', expiryTimeMs);
+      localStorage.setItem('refreshToken', authData.refreshToken);
+      setTimeout(() => {
+        dispatch('refreshIdToken', authData.refreshToken);
+      }, authData.expiresIn * 1000)
     }
   }
 });
